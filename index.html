@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Travel Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+</head>
+<body>
+  <header>
+    <img src="snc_aus_social_logo_dark.png" alt="Company Logo" class="logo">
+    <h1 class="title">Travel Calculator</h1>
+    <h4 class="text">This calculator shall be completed in accordance with PRCD-101AU-SNC AUS Travel Processing</h4>
+  </header>
+
+  <!-- TRAVEL DETAILS (moved above Per Diem and centered controls) -->
+  <div class="global-fields card" style="margin-top:12px;">
+    <h2>Travel Details</h2>
+
+    <div class="global-row">
+      <label>Employee:
+        <input type="text" id="employeeName" placeholder="Enter employee name">
+      </label>
+      <label>Reason for Travel:
+        <input type="text" id="travelReason" placeholder="Enter reason for travel">
+      </label>
+    </div>
+
+    <div class="global-row" style="align-items:center; gap:16px;">
+		<label style="flex:0 0 40%;">Salary Band:
+			<select id="salaryBand" style="width:50%;">
+				<option value="1">Band 1 ($0-$148,250)</option>
+				<option value="2">Band 2 ($148,251-$263,850)</option>
+				<option value="3">Band 3 ($263,850 and beyond)</option>
+			</select>
+		</label>
+
+	<div class="checkbox-row" style="flex:1; justify-content:center;">
+		<label style="text-align:center;">
+			<input type="checkbox" id="perDiemOnly" checked>
+			<span style="display:block;">Per Diem Only</span>
+		</label>
+		<label style="text-align:center;">
+			<input type="checkbox" id="postTravel"> 
+			<span style="display:block;">Post-Travel</span>
+		</label>
+	</div>
+	</div>
+  </div>
+
+  <!-- PER DIEM CALCULATOR (now below Travel Details) -->
+  <div id="perdiem-section" class="card" style="margin-top:12px;">
+    <h2>Step 1 — Calculate Per Diem</h2>
+
+    <div id="locations-container"></div>
+    <div class="center-controls" style="margin-top:8px;">
+      <button id="addLocationBtn">+ Add Location</button>
+      <button id="calculateBtn">Calculate Per Diem</button>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results" class="card results-card" style="margin-top:12px;">
+      <h3>Calculation Results</h3>
+      <pre id="calculationOutput" class="calculation-text">No calculations yet.</pre>
+    </div>
+  </div>
+
+  <!-- TRAVEL BUDGET EXTRAS -->
+  <div id="budgetExtras" class="card" style="display:none; margin-top:12px;">
+    <h3>Step 3 — Travel Cost Estimate</h3>
+
+    <div id="accomBlock">
+      <h4>Accommodation</h4>
+      <div id="accomLines"></div>
+      <button id="addAccomBtn">+ Add Accommodation</button>
+    </div>
+
+    <div id="taxiBlock" style="margin-top:12px;">
+      <h4>Taxis / Rides</h4>
+      <div id="taxiLines"></div>
+      <button id="addTaxiBtn">+ Add Taxi Trip</button>
+    </div>
+
+    <div id="hireCarBlock" style="margin-top:12px;">
+      <h4>Hire Cars - Include Fuel, Tolls, Parking, etc.</h4>
+      <div id="hireCarLines"></div>
+      <button id="addHireCarBtn">+ Add Hire Car</button>
+    </div>
+
+    <div id="otherBlock" style="margin-top:12px;">
+      <h4>Other - Visa's, Medical Costs, Own Vehicle Costs, etc.</h4>
+      <div id="otherLines"></div>
+      <button id="addOtherBtn">+ Add Other</button>
+    </div>
+
+    <!-- Totals area: includes Total Per Diem line -->
+    <div id="budgetTotals" style="margin-top:16px;">
+      <div><strong>Subtotal (Extras):</strong> <span id="subtotalValue">$0.00</span></div>
+      <div><strong>Total Per Diem:</strong> <span id="totalPerDiemValue">$0.00</span></div>
+      <div><strong>Contingency (10% of Subtotal + Per Diem):</strong> <span id="contingencyValue">$0.00</span></div>
+      <div style="font-size:1.1em;"><strong>Grand Total:</strong> <span id="grandTotalValue">$0.00</span></div>
+    </div>
+  </div>
+
+  <div style="margin-top:12px;">
+    <button id="exportPDFBtn">Export to PDF</button>
+  </div>
+
+  <!-- Location Template -->
+  <template id="location-template">
+    <div class="location-entry card">
+      <div class="location-header" style="display:flex; justify-content:space-between; align-items:center;">
+        <h3>Location</h3>
+        <button class="removeBtn" onclick="removeLocationRow(this)">×</button>
+      </div>
+
+      <div class="row1" style="display:flex; gap:8px; align-items:center;">
+        <label style="flex:1">Location:
+          <select class="location-select">
+            <option>Adelaide</option><option>Brisbane</option><option>Canberra</option><option>Darwin</option>
+            <option>Hobart</option><option>Melbourne</option><option>Perth</option><option>Sydney</option>
+            <option>Katherine</option><option>Alice Springs</option><option>Broome</option><option>Christmas Island</option>
+            <option>Cocos (Keeling)</option><option>Exmouth</option><option>Newcastle</option><option>Nowra</option>
+            <option>Rockhampton</option><option>Toowoomba</option><option>USA</option><option>Canada</option>
+            <option>Germany</option><option>India</option><option>Indonesia</option><option>Italy</option>
+            <option>Japan</option><option>Malaysia</option><option>Norway</option><option>PNG</option>
+            <option>Philippines</option><option>Singapore</option><option>Thailand</option><option>France</option>
+            <option>Netherlands</option><option>New Zealand</option><option>UAE</option><option>UK</option><option>Vietnam</option>
+          </select>
+        </label>
+
+        <label>Travel Start:
+          <input type="datetime-local" class="startDate">
+        </label>
+
+        <label>Travel Complete:
+          <input type="datetime-local" class="endDate">
+        </label>
+      </div>
+
+      <div class="row2" style="display:flex; gap:8px; align-items:center; margin-top:8px;">
+		<div class="meals-provided" style="display:flex; align-items:center; gap:6px;">
+			<label style="font-weight:600; margin-right:4px;">Provided Meals:</label>
+			<label>B:<input type="number" class="breakfastCount" value="0" min="0" style="width:50px"></label>
+			<label>L:<input type="number" class="lunchCount" value="0" min="0" style="width:50px"></label>
+			<label>D:<input type="number" class="dinnerCount" value="0" min="0" style="width:50px"></label>
+		</div>
+		<div style="flex:1;">
+			<label>Comments:
+			<input type="text" class="locationComments" placeholder="Notes for this location"
+             style="width:90%; height:60px;">
+			</label>
+		</div>
+	</div>
+    </div>
+  </template>
+
+  <!-- Small templates for extras -->
+  <template id="accom-template">
+    <div class="line accom-line">
+      <input class="accom-desc" placeholder="Description (e.g. Hotel X)" />
+      <input class="accom-rate" type="text" placeholder="Rate per night" />
+      <input class="accom-nights" type="number" min="0" class="accom-nights" placeholder="Nights" />
+      <input class="accom-total" readonly placeholder="Total" />
+      <button class="removeLineBtn">Remove</button>
+    </div>
+  </template>
+
+  <template id="taxi-template">
+    <div class="line taxi-line">
+      <input class="taxi-desc" placeholder="Description (e.g. Airport transfer)" />
+      <input class="taxi-rate" type="text" placeholder="Amount per trip" />
+      <input class="taxi-qty" type="number" min="0" placeholder="Trips" />
+      <input class="taxi-total" readonly placeholder="Total" />
+      <button class="removeLineBtn">Remove</button>
+    </div>
+  </template>
+
+  <template id="hirecar-template">
+    <div class="line hirecar-line">
+      <input class="hire-desc" placeholder="Description (e.g. SUV hire)" />
+      <input class="hire-rate" type="text" placeholder="Rate per day" />
+      <input class="hire-days" type="number" min="0" placeholder="Days" />
+      <input class="hire-total" readonly placeholder="Total" />
+      <button class="removeLineBtn">Remove</button>
+    </div>
+  </template>
+
+  <template id="other-template">
+    <div class="line other-line">
+      <input class="other-desc" placeholder="Description (custom)" />
+      <input class="other-amount" type="text" placeholder="Amount" />
+      <input class="other-total" readonly placeholder="Total" />
+      <button class="removeLineBtn">Remove</button>
+    </div>
+  </template>
+
+  <!-- jsPDF and AutoTable -->
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+	<script src="https://unpkg.com/jspdf-acroform/dist/jspdf.plugin.acroform.min.js"></script>
+	<script src="script.js"></script>
+
+</body>
+</html>
