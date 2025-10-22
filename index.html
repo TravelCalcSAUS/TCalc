@@ -8,9 +8,9 @@
 </head>
 <body>
   <header>
-    <img src="snc_aus_social_logo_dark.png" alt="Company Logo" class="logo">
+    <img src="aus_ato.png" alt="Company Logo" class="logo">
     <h1 class="title">Travel Calculator</h1>
-    <h4 class="text">This calculator shall be completed in accordance with PRCD-101AU-SNC AUS Travel Processing</h4>
+    <h4 class="text">This calculator shall be completed in accordance with applicable company policy. It uses data from TD2025-004</h4>
   </header>
 
   <!-- TRAVEL DETAILS (moved above Per Diem and centered controls) -->
@@ -33,6 +33,21 @@
 				<option value="2">Band 2 ($148,251-$263,850)</option>
 				<option value="3">Band 3 ($263,850 and beyond)</option>
 			</select>
+			
+		<label for="projectSelect"><strong>Project:</strong></label>
+		<select id="projectSelect">
+		<option value="">-- Select Project --</option>
+		<option>INDIRECT</option>
+		<option>B&amp;P</option>
+		<option>IR&amp;D</option>
+		<option>610-001</option>
+		<option>610-002</option>
+		<option>610-005</option>
+		<option>610-024</option>
+		<option>610-025</option>
+		<option>MULTIPLE</option>
+		</select>
+		
 		</label>
 
 	<div class="checkbox-row" style="flex:1; justify-content:center;">
@@ -68,8 +83,14 @@
   <!-- TRAVEL BUDGET EXTRAS -->
   <div id="budgetExtras" class="card" style="display:none; margin-top:12px;">
     <h3>Step 3 — Travel Cost Estimate</h3>
+	<!-- Flights Section -->
+	<div id="flightsSection" class="extras-section">
+		<h3>Flights</h3>
+		<div id="flightsContainer"></div>
+		<button id="addFlightBtn" type="button">Add Flight</button>
+	</div>
 
-    <div id="accomBlock">
+	<div id="accomBlock">
       <h4>Accommodation</h4>
       <div id="accomLines"></div>
       <button id="addAccomBtn">+ Add Accommodation</button>
@@ -156,6 +177,16 @@
   </template>
 
   <!-- Small templates for extras -->
+  
+	<template id="flight-template">
+		<div class="line flight-line">
+			<input class="flight-desc" placeholder="Flight description (e.g. SYD–MEL QF412)" />
+			<input class="flight-cost" type="text" placeholder="Cost ($)" />
+			<input class="flight-total" readonly placeholder="Total" />
+			<button class="removeLineBtn" type="button">Remove</button>
+		</div>
+	</template>
+
   <template id="accom-template">
     <div class="line accom-line">
       <input class="accom-desc" placeholder="Description (e.g. Hotel X)" />

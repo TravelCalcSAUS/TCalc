@@ -202,17 +202,73 @@ function addAccommodationLine() { addLine("accomLines", "accom-template"); }
 function addTaxiLine() { addLine("taxiLines", "taxi-template"); }
 function addHireCarLine() { addLine("hireCarLines", "hirecar-template"); }
 function addOtherLine() { addLine("otherLines", "other-template"); }
+// ---------------------- Flights Section ----------------------
+function addFlightLine() {
+  // Confirm both elements exist before proceeding
+  const block = document.getElementById("flightsContainer") || document.getElementById("flightLines");
+  const template = document.getElementById("flight-template");
+
+  if (!block || !template) {
+    console.error("❌ Flight container or template not found.");
+    return;
+  }
+
+  const clone = template.content.cloneNode(true);
+  block.appendChild(clone);
+
+  const newLine = block.lastElementChild;
+  newLine.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("input", calculateExtrasTotals);
+  });
+
+  // Apply currency formatting
+  attachCurrencyFormatting(newLine);
+
+  // Add remove button handler
+  const removeBtn = newLine.querySelector(".removeLineBtn");
+  if (removeBtn) {
+    removeBtn.addEventListener("click", () => {
+      newLine.remove();
+      calculateExtrasTotals();
+    });
+  }
+
+  // Immediately recalc
+  calculateExtrasTotals();
+}
+
+// Wait for DOM ready before attaching button
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("addFlightBtn");
+  if (btn) {
+    btn.addEventListener("click", addFlightLine);
+  } else {
+    console.error("❌ Add Flight button not found in DOM.");
+  }
+});
+
+
 
 /* Attach formatting only to rate/amount text fields.
    Quantity inputs are type="number" and are NOT formatted with $.
 */
 function attachCurrencyFormatting(container) {
-  const currencySelectors = ['.accom-rate', '.taxi-rate', '.hire-rate', '.other-amount'];
+  const currencySelectors = [
+    '.accom-rate',
+    '.taxi-rate',
+    '.hire-rate',
+    '.other-amount',
+    '.flight-cost' // ✈️ include flights
+  ];
+
   currencySelectors.forEach(sel => {
     container.querySelectorAll(sel).forEach(inp => {
+      // Remove $ for editing
       inp.addEventListener("focus", () => {
         inp.value = parseCurrency(inp.value) || "";
       });
+
+      // Format on blur
       inp.addEventListener("blur", () => {
         const raw = String(inp.value || "").trim();
         if (raw === "") {
@@ -227,6 +283,8 @@ function attachCurrencyFormatting(container) {
     });
   });
 }
+
+
 
 // ---------------------- Extras totals ----------------------
 function calculateExtrasTotals() {
@@ -268,6 +326,14 @@ function calculateExtrasTotals() {
     line.querySelector(".other-total").value = formatCurrency(amt);
     subtotal += amt;
   });
+  
+  // --- Flights ---
+document.querySelectorAll(".flight-line").forEach(line => {
+    const cost = parseCurrency(line.querySelector(".flight-cost").value);
+    line.querySelector(".flight-total").value = formatCurrency(cost);
+    subtotal += cost;
+  });
+
 
   const perDiemTotal = parseCurrency(document.getElementById("totalPerDiemValue").textContent);
 
@@ -394,6 +460,8 @@ function exportPDF() {
   const reason = document.getElementById("travelReason").value || "";
   const postTravel = document.getElementById("postTravel").checked;
   const perDiemOnlyMode = document.getElementById("perDiemOnly").checked;
+  const project = document.getElementById("projectSelect").value || "";
+
 
   const title = `SNC AUS ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
 
@@ -403,6 +471,8 @@ function exportPDF() {
   doc.setFontSize(11);
   doc.text(`Employee: ${employee}`, 40, 60);
   doc.text(`Reason: ${reason}`, 300, 60);
+  doc.text(`Project: ${project}`, 40, 80);
+
 
   // --- Per-Diem Table ---
   const perDiemHead = [
@@ -420,7 +490,7 @@ function exportPDF() {
     formatCurrency(r.incidentals), formatCurrency(r.total), r.comments
   ]);
 
-  let perDiemEndY = 80;
+  let perDiemEndY = 120;
   doc.autoTable({
     startY: perDiemEndY,
     head: perDiemHead,
@@ -447,6 +517,14 @@ function exportPDF() {
   // --- Travel Extras Table ---
   let extrasRows = [];
   if (!perDiemOnlyMode) {
+	  
+	// --- Flights ---
+	document.querySelectorAll(".flight-line").forEach(line => {
+		const desc = line.querySelector(".flight-desc").value || "";
+		const cost = parseCurrency(line.querySelector(".flight-cost").value);
+		if (desc || cost) extrasRows.push(["Flight", desc, "", "", formatCurrency(cost)]);
+	});
+
     document.querySelectorAll(".accom-line").forEach(line => {
       const desc = line.querySelector(".accom-desc").value || "";
       const rate = parseCurrency(line.querySelector(".accom-rate").value);
@@ -531,12 +609,18 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addLocationBtn').addEventListener('click', addLocationRow);
   document.getElementById('calculateBtn').addEventListener('click', calculatePerDiem);
   document.getElementById('exportPDFBtn').addEventListener('click', exportPDF);
+
   document.getElementById('perDiemOnly').addEventListener('change', e => {
     document.getElementById('budgetExtras').style.display = e.target.checked ? 'none' : 'block';
   });
+
+  // --- Add line buttons ---
   document.getElementById('addAccomBtn').addEventListener('click', addAccommodationLine);
   document.getElementById('addTaxiBtn').addEventListener('click', addTaxiLine);
   document.getElementById('addHireCarBtn').addEventListener('click', addHireCarLine);
   document.getElementById('addOtherBtn').addEventListener('click', addOtherLine);
+  document.getElementById('addFlightBtn').addEventListener('click', addFlightLine); // ✅ fixed to use existing addLine() logic
+
+  // Initial location row
   addLocationRow();
 });

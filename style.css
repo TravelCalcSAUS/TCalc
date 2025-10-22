@@ -312,5 +312,18 @@ input[type="number"] {
   min-width:140px;
 }
 
+#flightsSection {
+  margin-top: 20px;
+}
+
+.flight-line input {
+  width: 180px;
+  margin-right: 10px;
+}
+.flight-total[readonly] {
+  background-color: #f9f9f9;
+}
+
+
 #lineTotals { margin-top:12px; }
 #budgetTotals div { margin-bottom:6px; }
