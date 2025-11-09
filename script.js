@@ -352,83 +352,162 @@ let perDiemResults = [];
 function calculatePerDiem() {
   const container = document.getElementById("locations-container");
   const salaryBand = document.getElementById("salaryBand").value;
-  const entries = container.querySelectorAll(".location-entry");
+  const entries = Array.from(container.querySelectorAll(".location-entry"));
   if (entries.length === 0) {
     alert("Please add at least one location");
     return;
   }
 
-  perDiemResults = [];
-  let previousEnd = null;
-  let grandTotal = 0;
-  let grandBreakfast = 0, grandLunch = 0, grandDinner = 0;
-  const incidentalsMap = new Map();
-
-  let outputText = "Detailed Cost Breakdown by Location:\n\n";
-
-  entries.forEach(entry => {
+  // Build segments array (one per entry) capturing original index and times
+  const segments = entries.map((entry, idx) => {
     const location = entry.querySelector(".location-select").value;
     const start = new Date(entry.querySelector(".startDate").value);
     const end = new Date(entry.querySelector(".endDate").value);
-
-    if (previousEnd && start < previousEnd) {
-      alert(`Start time of ${location} overlaps previous.`);
-      return;
-    }
-    previousEnd = new Date(end);
-
     const providedB = parseInt(entry.querySelector(".breakfastCount").value) || 0;
     const providedL = parseInt(entry.querySelector(".lunchCount").value) || 0;
     const providedD = parseInt(entry.querySelector(".dinnerCount").value) || 0;
     const comments = entry.querySelector(".locationComments").value || "";
+    const rates = atoRates[location]?.[salaryBand] || null;
+    return {
+      originalIndex: idx,
+      location,
+      start,
+      end,
+      providedB,
+      providedL,
+      providedD,
+      comments,
+      rates
+    };
+  });
 
-    const rates = atoRates[location]?.[salaryBand];
-    if (!rates) return;
+  // Validate data: ensure start <= end and rates exist
+  for (const seg of segments) {
+    if (!seg.rates) {
+      alert(`No ATO rates for location "${seg.location}" / salary band ${salaryBand}.`);
+      return;
+    }
+    if (!(seg.start instanceof Date) || isNaN(seg.start.getTime()) ||
+        !(seg.end instanceof Date) || isNaN(seg.end.getTime()) ||
+        seg.end < seg.start) {
+      alert(`Invalid dates for location "${seg.location}". Please check start/stop.`);
+      return;
+    }
+  }
 
-    const days = splitTravelIntoDays(start, end);
+  // Sort segments by start time to determine earliest segments per day
+  const sorted = segments.slice().sort((a, b) => a.start - b.start);
+
+  // For each segment build the set of calendar-days it covers and compute meals claim counts
+  // We'll also collect all dayKeys (YYYY-MM-DD) across segments
+  const segmentDays = sorted.map(seg => {
+    const days = splitTravelIntoDays(seg.start, seg.end);
+    const dayKeys = days.map(d => d.start.toISOString().split("T")[0]);
+    return {
+      seg,
+      dayKeys,
+      days
+    };
+  });
+
+  // Assign incidentals per calendar-day to the earliest segment that covers that day
+  const dayAssignment = new Map(); // dayKey => sortedIndex (index in sorted array)
+  segmentDays.forEach((sd, sortedIdx) => {
+    sd.dayKeys.forEach(dayKey => {
+      if (!dayAssignment.has(dayKey)) {
+        dayAssignment.set(dayKey, sortedIdx); // assign to earliest covering segment
+      }
+    });
+  });
+
+  // Now compute per-segment meal claims and incidentals based on the assignment map
+  perDiemResults = [];
+  let grandTotal = 0;
+  let grandBreakfast = 0, grandLunch = 0, grandDinner = 0;
+
+  // We'll accumulate incidentals per originalIndex
+  const incidentalsByOriginal = new Map(); // origIdx => total incidentals amount
+
+  // Initialize counts
+  segments.forEach(s => incidentalsByOriginal.set(s.originalIndex, 0));
+
+  // For each sorted segment, compute meal claims and count incidentals assigned to it
+  segmentDays.forEach((sd, sortedIdx) => {
+    const seg = sd.seg;
+    const rates = seg.rates;
     let b = 0, l = 0, d = 0;
-    const inc = rates.incidentals;
-    const locDays = new Set();
+    const locDaySet = new Set();
 
-    days.forEach(day => {
+    // For each day (day object has start and end)
+    sd.days.forEach(day => {
       const dayKey = day.start.toISOString().split("T")[0];
-      locDays.add(dayKey);
-      if (!incidentalsMap.has(dayKey)) incidentalsMap.set(dayKey, inc);
+      locDaySet.add(dayKey);
+      // Meals: check overlap between segment day window and meal windows
       b += checkMealClaim(day.start, day.end, mealTimes.breakfast.start, mealTimes.breakfast.end);
       l += checkMealClaim(day.start, day.end, mealTimes.lunch.start, mealTimes.lunch.end);
       d += checkMealClaim(day.start, day.end, mealTimes.dinner.start, mealTimes.dinner.end);
+
+      // Incidentals: if this dayKey is assigned to this sorted segment, add incidentals
+      if (dayAssignment.get(dayKey) === sortedIdx) {
+        // add incidentals amount to that segment's originalIndex tally
+        const prev = incidentalsByOriginal.get(seg.originalIndex) || 0;
+        incidentalsByOriginal.set(seg.originalIndex, prev + rates.incidentals);
+      }
     });
 
-    b = Math.max(b - providedB, 0);
-    l = Math.max(l - providedL, 0);
-    d = Math.max(d - providedD, 0);
+    // Subtract provided meals
+    b = Math.max(b - seg.providedB, 0);
+    l = Math.max(l - seg.providedL, 0);
+    d = Math.max(d - seg.providedD, 0);
 
-    const locationIncidentals = locDays.size * inc;
-    const total = b * rates.breakfast + l * rates.lunch + d * rates.dinner + locationIncidentals;
-
-    grandTotal += total;
-    grandBreakfast += b; grandLunch += l; grandDinner += d;
-
+    // We'll calculate totals later after we know incidentals per original index
     perDiemResults.push({
-      location,
-      start: start.toLocaleString(),
-      stop: end.toLocaleString(),
-      totalDays: locDays.size,
-      mealsProvided: { B: providedB, L: providedL, D: providedD },
+      originalIndex: seg.originalIndex,
+      location: seg.location,
+      start: seg.start.toLocaleString(),
+      stop: seg.end.toLocaleString(),
+      totalDays: locDaySet.size,
+      mealsProvided: { B: seg.providedB, L: seg.providedL, D: seg.providedD },
       mealsClaimed: { B: b, L: l, D: d },
-      incidentals: locationIncidentals,
-      total: total,
-      comments
+      incidentals: 0, // placeholder; will set below using incidentalsByOriginal
+      total: 0,
+      comments: seg.comments,
+      rates
     });
 
-    outputText += `${location}:\n`;
-    outputText += `  - Days: ${locDays.size}\n`;
-    outputText += `  - Breakfast: ${b} × $${rates.breakfast.toFixed(2)} = $${(b * rates.breakfast).toFixed(2)}\n`;
-    outputText += `  - Lunch: ${l} × $${rates.lunch.toFixed(2)} = $${(l * rates.lunch).toFixed(2)}\n`;
-    outputText += `  - Dinner: ${d} × $${rates.dinner.toFixed(2)} = $${(d * rates.dinner).toFixed(2)}\n`;
-    outputText += `  - Incidentals: ${locDays.size} × $${inc.toFixed(2)} = $${locationIncidentals.toFixed(2)}\n`;
-    outputText += `  - Total: $${total.toFixed(2)}\n\n`;
-	outputText += `  - Recommended Accommodation (ATO): ${rates.accommodation > 0 ? "$" + rates.accommodation.toFixed(2) : "N/A"}\n\n\n`;
+    grandBreakfast += b;
+    grandLunch += l;
+    grandDinner += d;
+  });
+
+  // Now attach incidentals and compute totals for perDiemResults (map by originalIndex)
+  perDiemResults.forEach(r => {
+    const incAmount = incidentalsByOriginal.get(r.originalIndex) || 0;
+    r.incidentals = incAmount;
+    const rates = r.rates;
+    const mealsTotal = (r.mealsClaimed.B * rates.breakfast) + (r.mealsClaimed.L * rates.lunch) + (r.mealsClaimed.D * rates.dinner);
+    r.total = mealsTotal + r.incidentals;
+    grandTotal += r.total;
+  });
+
+  // Re-order perDiemResults to match order of UI entries (original order)
+  perDiemResults.sort((a, b) => a.originalIndex - b.originalIndex);
+
+  // Build output text (preserves your original format)
+  let outputText = "Detailed Cost Breakdown by Location:\n\n";
+  perDiemResults.forEach(r => {
+    const rates = r.rates;
+    outputText += `${r.location}:\n`;
+    outputText += `  - Days: ${r.totalDays}\n`;
+    outputText += `  - Breakfast: ${r.mealsClaimed.B} × $${rates.breakfast.toFixed(2)} = $${(r.mealsClaimed.B * rates.breakfast).toFixed(2)}\n`;
+    outputText += `  - Lunch: ${r.mealsClaimed.L} × $${rates.lunch.toFixed(2)} = $${(r.mealsClaimed.L * rates.lunch).toFixed(2)}\n`;
+    outputText += `  - Dinner: ${r.mealsClaimed.D} × $${rates.dinner.toFixed(2)} = $${(r.mealsClaimed.D * rates.dinner).toFixed(2)}\n`;
+    const incidentalsDays = r.incidentals > 0 && r.rates.incidentals > 0
+		? (r.incidentals / r.rates.incidentals)
+		: 0;
+	outputText += `  - Incidentals: ${incidentalsDays} × $${r.rates.incidentals.toFixed(2)} = ${formatCurrency(r.incidentals)}\n`;
+	outputText += `  - Total: ${formatCurrency(r.total)}\n\n`;
+    outputText += `  - Recommended Accommodation (ATO): ${rates.accommodation > 0 ? "$" + rates.accommodation.toFixed(2) : "N/A"}\n\n\n`;
   });
 
   outputText += `Total Meals Claimed: Breakfast ${grandBreakfast}, Lunch ${grandLunch}, Dinner ${grandDinner}\n\n`;
@@ -440,17 +519,11 @@ function calculatePerDiem() {
   // recalc extras totals (so contingency uses fresh per diem)
   calculateExtrasTotals();
 
-  if (!document.getElementById("perDiemOnly").checked) {
-    const subtotal = parseCurrency(document.getElementById("subtotalValue").textContent);
-    const contingency = parseCurrency(document.getElementById("contingencyValue").textContent);
-    const grandExtras = parseCurrency(document.getElementById("grandTotalValue").textContent);
-  
-  }
-
-  outputText += `	 *NOTE* - Incidentals can only be claimed once per day, 1st location for the day is the rate used \n`;
-  outputText += `  *NOTE* - Meal times B: 0600 - 0800, L: 1100 - 1300, D: 1800 - 2100. Travel must overlap > 1Hr to claim. \n`;
+  outputText += `\t *NOTE* - Incidentals can only be claimed once per day, first (earliest) location segment for the day receives the incidentals.\n`;
+  outputText += `  *NOTE* - Meal times B: 0600 - 0900, L: 1100 - 1300, D: 1800 - 2100. Travel must overlap > 1Hr to claim.\n`;
   document.getElementById("calculationOutput").textContent = outputText;
 }
+
 
 // ---------------------- Export to PDF (full inline implementation) ----------------------
 function exportPDF() {
@@ -463,7 +536,7 @@ function exportPDF() {
   const project = document.getElementById("projectSelect").value || "";
 
 
-  const title = `ATO TD2025-004 ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
+  const title = `SNC AUS ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
 
   // --- Header ---
   doc.setFontSize(14);
@@ -624,4 +697,3 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
-
