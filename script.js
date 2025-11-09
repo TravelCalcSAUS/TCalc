@@ -536,7 +536,7 @@ function exportPDF() {
   const project = document.getElementById("projectSelect").value || "";
 
 
-  const title = `SNC AUS ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
+  const title = `Travel Calculator TY25/26 ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
 
   // --- Header ---
   doc.setFontSize(14);
@@ -697,3 +697,4 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
