@@ -663,9 +663,12 @@ function exportPDF() {
     doc.text(`Contingency (10% of Travel + Per Diem): ${formatCurrency(contingency)}`, 60, summaryY);
     summaryY += 16;
   }
+ if (!postTravel) {
   doc.setFont(undefined, "bold");
   doc.text(`Grand Total: ${formatCurrency(combinedGrand)}`, 60, summaryY);
   doc.setFont(undefined, "normal");
+ }
+
 
   // --- Timestamp ---
   const generatedOn = new Date().toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
@@ -697,6 +700,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
 
 
 
