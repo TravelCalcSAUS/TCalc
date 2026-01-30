@@ -531,12 +531,12 @@ function exportPDF() {
   const doc = new jsPDF({ orientation: "landscape", unit: "pt" });
   const employee = document.getElementById("employeeName").value || "";
   const reason = document.getElementById("travelReason").value || "";
-  const postTravel = document.getElementById("postTravel").checked;
+  //const postTravel = document.getElementById("postTravel").checked;
   const perDiemOnlyMode = document.getElementById("perDiemOnly").checked;
   const project = document.getElementById("projectSelect").value || "";
 
 
-  const title = `Travel Calculator TY25/26 ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
+  const title = `Travel Calculator TY25/26 ${perDiemOnlyMode ? "Post-Travel/Perdiem" : "Pre-Travel"} Authority`;
 
   // --- Header ---
   doc.setFontSize(14);
@@ -662,15 +662,16 @@ function exportPDF() {
     summaryY += 16;
     doc.text(`Contingency (10% of Travel + Per Diem): ${formatCurrency(contingency)}`, 60, summaryY);
     summaryY += 16;
+	doc.setFont(undefined, "bold");
+    doc.text(`Grand Total: ${formatCurrency(combinedGrand)}`, 60, summaryY);
+    doc.setFont(undefined, "normal");
   }
-	doc.text(`DEBUG postTravel=${postTravel} perDiemOnly=${perDiemOnlyMode}`, 60, summaryY);
-summaryY += 16;
 
- if (!postTravel) {
-  doc.setFont(undefined, "bold");
-  doc.text(`Grand Total: ${formatCurrency(combinedGrand)}`, 60, summaryY);
-  doc.setFont(undefined, "normal");
- }
+ //if (!postTravel) {
+  //doc.setFont(undefined, "bold");
+  //doc.text(`Grand Total: ${formatCurrency(combinedGrand)}`, 60, summaryY);
+  //doc.setFont(undefined, "normal");
+ //}
 
 
   // --- Timestamp ---
@@ -679,7 +680,7 @@ summaryY += 16;
   doc.setFontSize(9);
   doc.text(`Generated on: ${generatedOn}`, 40, sigY - 10);
 
-  doc.save(`YYMMDD_${employee || "travel"}_${postTravel ? "post" : "pre"}_authority.pdf`);
+  doc.save(`YYMMDD_${employee || "travel"}_${perDiemOnlyMode ? "perdiem" : "pre"}_authority.pdf`);
 }
 
 
@@ -703,6 +704,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
 
 
 
