@@ -664,7 +664,8 @@ function exportPDF() {
     summaryY += 16;
   }
   doc.setFont(undefined, "bold");
-  doc.text(`Grand Total: ${formatCurrency(combinedGrand)}`, 60, summaryY);
+	// const title = `Travel Calculator TY25/26 ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
+  doc.text({postTravel ? "End-Report" : "`Grand Total: ${formatCurrency(combinedGrand)}`"}, 60, summaryY); 
   doc.setFont(undefined, "normal");
 
   // --- Timestamp ---
@@ -697,4 +698,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
 
