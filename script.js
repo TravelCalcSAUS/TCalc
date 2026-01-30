@@ -663,10 +663,10 @@ function exportPDF() {
     doc.text(`Contingency (10% of Travel + Per Diem): ${formatCurrency(contingency)}`, 60, summaryY);
     summaryY += 16;
   }
-  doc.setFont(undefined, "bold");
+//  doc.setFont(undefined, "bold");
 	// const title = `Travel Calculator TY25/26 ${postTravel ? "Post-Travel" : "Pre-Travel"} Authority`;
-  doc.text({postTravel ? "End-Report" : "`Grand Total: ${formatCurrency(combinedGrand)}`"}, 60, summaryY); 
-  doc.setFont(undefined, "normal");
+  //doc.text({postTravel ? "End-Report" : "`Grand Total: ${formatCurrency(combinedGrand)}`"}, 60, summaryY); 
+  //doc.setFont(undefined, "normal");
 
   // --- Timestamp ---
   const generatedOn = new Date().toLocaleString("en-AU", { dateStyle: "medium", timeStyle: "short" });
@@ -698,5 +698,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
 
 
