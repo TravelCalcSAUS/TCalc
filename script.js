@@ -663,6 +663,9 @@ function exportPDF() {
     doc.text(`Contingency (10% of Travel + Per Diem): ${formatCurrency(contingency)}`, 60, summaryY);
     summaryY += 16;
   }
+	doc.text(`DEBUG postTravel=${postTravel} perDiemOnly=${perDiemOnlyMode}`, 60, summaryY);
+summaryY += 16;
+
  if (!postTravel) {
   doc.setFont(undefined, "bold");
   doc.text(`Grand Total: ${formatCurrency(combinedGrand)}`, 60, summaryY);
@@ -700,6 +703,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
 
 
 
