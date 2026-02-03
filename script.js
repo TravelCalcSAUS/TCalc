@@ -346,6 +346,14 @@ document.querySelectorAll(".flight-line").forEach(line => {
   document.getElementById("grandTotalValue").textContent = formatCurrency(grand);
 }
 
+function toLocalDateKey(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+
 // ---------------------- Per-diem calculation (math preserved) ----------------------
 let perDiemResults = [];
 
@@ -402,7 +410,7 @@ function calculatePerDiem() {
   // We'll also collect all dayKeys (YYYY-MM-DD) across segments
   const segmentDays = sorted.map(seg => {
     const days = splitTravelIntoDays(seg.start, seg.end);
-    const dayKeys = days.map(d => d.start.toISOString().split("T")[0]);
+    const dayKeys = days.map(d => toLocalDateKey(d.start)); // ✅ LOCAL day key
     return {
       seg,
       dayKeys,
@@ -440,7 +448,7 @@ function calculatePerDiem() {
 
     // For each day (day object has start and end)
     sd.days.forEach(day => {
-      const dayKey = day.start.toISOString().split("T")[0];
+      const dayKey = toLocalDateKey(day.start); // ✅ LOCAL day key
       locDaySet.add(dayKey);
       // Meals: check overlap between segment day window and meal windows
       b += checkMealClaim(day.start, day.end, mealTimes.breakfast.start, mealTimes.breakfast.end);
@@ -503,10 +511,10 @@ function calculatePerDiem() {
     outputText += `  - Lunch: ${r.mealsClaimed.L} × $${rates.lunch.toFixed(2)} = $${(r.mealsClaimed.L * rates.lunch).toFixed(2)}\n`;
     outputText += `  - Dinner: ${r.mealsClaimed.D} × $${rates.dinner.toFixed(2)} = $${(r.mealsClaimed.D * rates.dinner).toFixed(2)}\n`;
     const incidentalsDays = r.incidentals > 0 && r.rates.incidentals > 0
-		? (r.incidentals / r.rates.incidentals)
-		: 0;
-	outputText += `  - Incidentals: ${incidentalsDays} × $${r.rates.incidentals.toFixed(2)} = ${formatCurrency(r.incidentals)}\n`;
-	outputText += `  - Total: ${formatCurrency(r.total)}\n\n`;
+      ? Math.round(r.incidentals / r.rates.incidentals)
+      : 0;
+    outputText += `  - Incidentals: ${incidentalsDays} × $${r.rates.incidentals.toFixed(2)} = ${formatCurrency(r.incidentals)}\n`;
+    outputText += `  - Total: ${formatCurrency(r.total)}\n\n`;
     outputText += `  - Recommended Accommodation (ATO): ${rates.accommodation > 0 ? "$" + rates.accommodation.toFixed(2) : "N/A"}\n\n\n`;
   });
 
@@ -523,6 +531,7 @@ function calculatePerDiem() {
   outputText += `  *NOTE* - Meal times B: 0600 - 0900, L: 1100 - 1300, D: 1800 - 2100. Travel must overlap > 1Hr to claim.\n`;
   document.getElementById("calculationOutput").textContent = outputText;
 }
+
 
 
 // ---------------------- Export to PDF (full inline implementation) ----------------------
@@ -704,7 +713,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
-
 
 
 
