@@ -56,7 +56,7 @@ const atoRates = {
                 "3":{accommodation:207, breakfast:42.15, lunch:59.60, dinner:83.40, full:185.15, incidentals:35.05}},
 	"USA":{"1":{accommodation:0, breakfast:70, lunch:84, dinner:126, full:280, incidentals:45},
                 "2":{accommodation:0, breakfast:90, lunch:108, dinner:162, full:360, incidentals:50},
-                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:124.50, full:415, incidentals:60}},
+                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:186.75, full:415, incidentals:60}},
     "Canada":{"1":{accommodation:0, breakfast:58.75, lunch:70.50, dinner:105.75, full:235, incidentals:40},
                 "2":{accommodation:0, breakfast:72.50, lunch:87, dinner:130.50, full:290, incidentals:50},
                 "3":{accommodation:0, breakfast:91.25, lunch:109.50, dinner:164.25, full:365, incidentals:60}},
@@ -80,7 +80,7 @@ const atoRates = {
                 "3":{accommodation:0, breakfast:57.50, lunch:69, dinner:103.50, full:230, incidentals:45}},
     "Norway":{"1":{accommodation:0, breakfast:70, lunch:84, dinner:126, full:280, incidentals:45},
                 "2":{accommodation:0, breakfast:90, lunch:108, dinner:162, full:360, incidentals:50},
-                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:124.50, full:415, incidentals:60}},
+                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:186.75, full:415, incidentals:60}},
     "PNG":{"1":{accommodation:0, breakfast:48.75, lunch:58.50, dinner:87.75, full:195, incidentals:35},
                 "2":{accommodation:0, breakfast:53.75, lunch:64.50, dinner:96.75, full:215, incidentals:45},
                 "3":{accommodation:0, breakfast:72.50, lunch:87, dinner:130.50, full:290, incidentals:50}},
@@ -89,7 +89,7 @@ const atoRates = {
                 "3":{accommodation:0, breakfast:72.50, lunch:87, dinner:130.50, full:290, incidentals:50}},
     "Singapore":{"1":{accommodation:0, breakfast:70, lunch:84, dinner:126, full:280, incidentals:45},
                 "2":{accommodation:0, breakfast:90, lunch:108, dinner:162, full:360, incidentals:50},
-                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:124.50, full:415, incidentals:60}},
+                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:186.75, full:415, incidentals:60}},
     "Thailand":{"1":{accommodation:0, breakfast:48.75, lunch:58.50, dinner:87.75, full:195, incidentals:35},
                 "2":{accommodation:0, breakfast:53.75, lunch:64.50, dinner:96.75, full:215, incidentals:45},
                 "3":{accommodation:0, breakfast:72.50, lunch:87, dinner:130.50, full:290, incidentals:50}},
@@ -104,7 +104,7 @@ const atoRates = {
                 "3":{accommodation:0, breakfast:72.50, lunch:87, dinner:130.50, full:290, incidentals:50}},
     "UAE":{"1":{accommodation:0, breakfast:70, lunch:84, dinner:126, full:280, incidentals:45},
                 "2":{accommodation:0, breakfast:90, lunch:108, dinner:162, full:360, incidentals:50},
-                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:124.50, full:415, incidentals:60}},
+                "3":{accommodation:0, breakfast:103.75, lunch:124.50, dinner:186.75, full:415, incidentals:60}},
     "UK":{"1":{accommodation:0, breakfast:58.75, lunch:70.50, dinner:105.75, full:235, incidentals:40},
                 "2":{accommodation:0, breakfast:72.50, lunch:87, dinner:130.50, full:290, incidentals:50},
                 "3":{accommodation:0, breakfast:91.25, lunch:109.50, dinner:164.25, full:365, incidentals:60}},
@@ -713,6 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial location row
   addLocationRow();
 });
+
 
 
 
